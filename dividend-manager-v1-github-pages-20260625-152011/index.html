@@ -1,0 +1,751 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>配当ポートフォリオ管理</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <section class="hero">
+        <div>
+          <p class="eyebrow">Dividend & Asset Dashboard</p>
+          <h1>配当ポートフォリオ管理</h1>
+          <p class="hero-copy">
+            日本株、外国株、投資信託をまとめて見ながら、配当予定と投資資産の状態を整理します。
+          </p>
+        </div>
+        <div class="hero-panel" aria-label="年間配当サマリー">
+          <span>年間配当予定</span>
+          <strong id="heroAnnualDividend">0円</strong>
+          <small id="heroMonthlyDividend">月平均 0円</small>
+          <small class="hero-note">配当区分が「集計対象」の銘柄だけを年間配当に含めます</small>
+        </div>
+      </section>
+
+      <nav class="page-tabs" aria-label="ページ切り替え">
+        <button class="tab-button is-active" type="button" data-tab-target="portfolioPage" data-view-mode="assets">総資産</button>
+        <button class="tab-button" type="button" data-tab-target="portfolioPage" data-view-mode="dividends">日本株</button>
+        <button class="tab-button" type="button" data-tab-target="portfolioPage" data-view-mode="usEtf">外国株</button>
+        <button class="tab-button" type="button" data-tab-target="portfolioPage" data-view-mode="funds">投資信託</button>
+        <button class="tab-button" type="button" data-tab-target="analysisPage">分析</button>
+        <button class="tab-button" type="button" data-tab-target="importPage">取り込み</button>
+        <button class="tab-button" type="button" data-tab-target="settingsPage">設定</button>
+      </nav>
+
+      <section id="portfolioPage" class="tab-page is-active">
+        <section class="view-heading" aria-live="polite">
+          <div>
+            <h2 id="viewTitle">総資産</h2>
+            <p id="viewDescription">日本株、外国株、投資信託をまとめて確認します。</p>
+          </div>
+          <span id="viewBadge">全資産</span>
+        </section>
+
+      <section class="summary-grid" aria-label="集計">
+        <article class="metric metric-annual">
+          <span id="totalDividendLabel">年間配当</span>
+          <strong id="totalDividend">0円</strong>
+          <small id="totalDividendNote">税引前</small>
+        </article>
+        <article class="metric metric-yield-cost">
+          <span id="yieldOnCostLabel">取得利回り</span>
+          <strong id="yieldOnCost">0.00%</strong>
+          <small id="yieldOnCostNote">購入価格ベース</small>
+        </article>
+        <article class="metric metric-current-yield">
+          <span id="currentYieldLabel">現在利回り</span>
+          <strong id="currentYield">0.00%</strong>
+          <small id="currentYieldNote">現在値ベース</small>
+        </article>
+        <article class="metric metric-market">
+          <span id="marketValueLabel">評価額</span>
+          <strong id="marketValue">0円</strong>
+          <small id="coveredStocks">0銘柄</small>
+        </article>
+        <article class="metric metric-total-assets">
+          <span id="totalAssetValueLabel">総評価額</span>
+          <strong id="totalAssetValue">0円</strong>
+          <small id="totalAssetValueNote">全資産</small>
+        </article>
+        <article class="metric metric-total-gain">
+          <span>含み損益</span>
+          <strong id="totalGainLoss">0円</strong>
+          <small id="totalGainLossPct">0.00%</small>
+        </article>
+        <article class="metric metric-dividend-assets">
+          <span>配当対象資産</span>
+          <strong id="dividendAssetValue">0円</strong>
+          <small>年間配当の元になる資産</small>
+        </article>
+        <article class="metric metric-non-dividend-assets">
+          <span>無分配・未集計資産</span>
+          <strong id="nonDividendAssetValue">0円</strong>
+          <small>投信・ETFなど</small>
+        </article>
+      </section>
+
+      <section class="daily-dashboard" aria-label="デイリー利用ダッシュボード">
+        <div class="daily-dashboard-header">
+          <div>
+            <h2>今日の確認</h2>
+            <p>下落銘柄、買い増し検討候補、年間配当予定額を保有データから計算します。</p>
+          </div>
+          <label class="daily-toggle">
+            <input id="dailyDeclinersDividendOnly" type="checkbox" />
+            <span>配当あり銘柄だけ</span>
+          </label>
+        </div>
+
+        <div class="daily-grid">
+          <article class="daily-panel daily-panel-wide">
+            <div class="daily-panel-heading">
+              <h3>今日のマイナス銘柄</h3>
+              <span id="dailyDeclinersCount">0件</span>
+            </div>
+            <div class="table-scroll">
+              <table data-column-key="dailyDecliners">
+                <thead>
+                  <tr>
+                    <th data-daily-sort="code" data-daily-table="decliners">コード</th>
+                    <th data-daily-sort="name" data-daily-table="decliners">銘柄名</th>
+                    <th data-daily-sort="gainLossPct" data-daily-table="decliners">含み損益率</th>
+                    <th data-daily-sort="dayChangePct" data-daily-table="decliners">前日比%</th>
+                    <th data-daily-sort="current" data-daily-table="decliners">現在値</th>
+                    <th data-daily-sort="buy" data-daily-table="decliners">購入価格</th>
+                    <th data-daily-sort="dayChange" data-daily-table="decliners">前日比</th>
+                    <th data-daily-sort="qty" data-daily-table="decliners">保有数量</th>
+                    <th data-daily-sort="currentValue" data-daily-table="decliners">評価額</th>
+                  </tr>
+                </thead>
+                <tbody id="dailyDeclinersTable"></tbody>
+              </table>
+            </div>
+          </article>
+
+          <article class="daily-panel daily-panel-wide">
+            <div class="daily-panel-heading">
+              <h3>逆張り買い増し候補</h3>
+              <span>上位10件</span>
+            </div>
+            <div class="table-scroll">
+              <table data-column-key="buyCandidates">
+                <thead>
+                  <tr>
+                    <th data-daily-sort="code" data-daily-table="candidates">コード</th>
+                    <th data-daily-sort="name" data-daily-table="candidates">銘柄名</th>
+                    <th data-daily-sort="buy" data-daily-table="candidates">購入価格</th>
+                    <th data-daily-sort="current" data-daily-table="candidates">現在値</th>
+                    <th data-daily-sort="dayChangePct" data-daily-table="candidates">前日比%</th>
+                    <th data-daily-sort="gainLossPct" data-daily-table="candidates">評価損益率</th>
+                    <th data-daily-sort="currentYield" data-daily-table="candidates">配当利回り</th>
+                    <th data-daily-sort="buyCandidateScore" data-daily-table="candidates">スコア</th>
+                    <th data-daily-sort="currentValue" data-daily-table="candidates">評価額</th>
+                    <th data-daily-sort="dividendStatus" data-daily-table="candidates">配当状況</th>
+                    <th data-daily-sort="buyCandidateReasonsText" data-daily-table="candidates">理由</th>
+                  </tr>
+                </thead>
+                <tbody id="buyCandidateTable"></tbody>
+              </table>
+            </div>
+          </article>
+
+          <article class="daily-panel dividend-plan-panel">
+            <div class="daily-panel-heading">
+              <h3>年間配当予定額</h3>
+              <span id="dividendPlanPreviousDelta">前回比 -</span>
+            </div>
+            <div class="dividend-plan-cards">
+              <div class="dividend-plan-card">
+                <span>合計年間配当予定額</span>
+                <strong id="dividendPlanAnnualGross">0円</strong>
+                <small id="dividendPlanCurrencyNote">税引前</small>
+              </div>
+              <div class="dividend-plan-card">
+                <span>月平均配当額</span>
+                <strong id="dividendPlanMonthlyGross">0円</strong>
+                <small>税引前ベース</small>
+              </div>
+              <div class="dividend-plan-card">
+                <span>税引後目安</span>
+                <strong id="dividendPlanAnnualNet">0円</strong>
+                <small id="dividendPlanTaxNote">NISAは非課税、課税口座は20.315%で概算</small>
+              </div>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section class="watchlist-section" aria-label="ウォッチリスト（検討中銘柄）">
+        <div class="watchlist-heading">
+          <div>
+            <h2>ウォッチリスト（検討中銘柄）</h2>
+            <p>Yahoo!ファイナンス取り込み時にメモ欄へ「検討中」が含まれる銘柄を表示します。</p>
+          </div>
+          <div class="watchlist-actions">
+            <span id="watchlistCount">0件</span>
+            <button id="clearWatchlistButton" class="ghost" type="button">ウォッチリストをクリア</button>
+          </div>
+        </div>
+        <div class="table-scroll">
+          <table data-column-key="watchlist">
+            <thead>
+              <tr>
+                <th data-watchlist-sort="code">コード</th>
+                <th data-watchlist-sort="name">銘柄名</th>
+                <th data-watchlist-sort="current">現在値</th>
+                <th data-watchlist-sort="dayChange">前日比</th>
+                <th data-watchlist-sort="dayChangePct">前日比%</th>
+                <th data-watchlist-sort="dividend">配当</th>
+                <th data-watchlist-sort="currentYield">利回り</th>
+                <th data-watchlist-sort="memo">メモ</th>
+              </tr>
+            </thead>
+            <tbody id="watchlistTable"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="snapshotTrendSection" class="trend-panel" aria-label="&#x8CC7;&#x7523;&#x63A8;&#x79FB;">
+        <div class="trend-header">
+          <div>
+            <h2>&#x8CC7;&#x7523;&#x63A8;&#x79FB;</h2>
+            <p>&#x8A18;&#x9332;&#x6E08;&#x307F;&#x306E;&#x30B9;&#x30CA;&#x30C3;&#x30D7;&#x30B7;&#x30E7;&#x30C3;&#x30C8;&#x3092;&#x8868;&#x793A;&#x3057;&#x307E;&#x3059;</p>
+          </div>
+          <div class="trend-side">
+            <div id="snapshotRangeFilter" class="trend-range-filter" aria-label="&#x8868;&#x793A;&#x671F;&#x9593;">
+              <button class="trend-range-button is-active" type="button" data-range="1m">1&#x304B;&#x6708;</button>
+              <button class="trend-range-button" type="button" data-range="3m">3&#x304B;&#x6708;</button>
+              <button class="trend-range-button" type="button" data-range="6m">6&#x304B;&#x6708;</button>
+              <button class="trend-range-button" type="button" data-range="1y">1&#x5E74;</button>
+              <button class="trend-range-button" type="button" data-range="3y">3&#x5E74;</button>
+              <button class="trend-range-button" type="button" data-range="5y">5&#x5E74;</button>
+              <button class="trend-range-button" type="button" data-range="all">&#x5168;&#x671F;&#x9593;</button>
+            </div>
+            <ul id="snapshotTrendLegend" class="trend-legend" aria-label="&#x51E1;&#x4F8B;"></ul>
+          </div>
+        </div>
+        <div class="trend-chart-wrap">
+          <div id="snapshotTrendEmpty" class="trend-empty"></div>
+          <svg
+            id="snapshotTrendChart"
+            class="trend-chart"
+            viewBox="0 0 760 280"
+            role="img"
+            aria-label="&#x8CC7;&#x7523;&#x63A8;&#x79FB;&#x30B0;&#x30E9;&#x30D5;"
+            preserveAspectRatio="none"
+          ></svg>
+        </div>
+        <div class="dividend-trend">
+          <div class="dividend-trend-header">
+            <div>
+              <h3>&#x914D;&#x5F53;&#x63A8;&#x79FB;</h3>
+              <p>&#x5E74;&#x9593;&#x4E88;&#x60F3;&#x914D;&#x5F53;&#x306E;&#x63A8;&#x79FB;&#x3092;&#x8868;&#x793A;&#x3057;&#x307E;&#x3059;</p>
+            </div>
+            <div class="dividend-trend-summary" aria-live="polite">
+              <div class="dividend-trend-metric">
+                <span>&#x5E74;&#x9593;&#x4E88;&#x60F3;&#x914D;&#x5F53;</span>
+                <strong id="dividendTrendCurrentValue">-</strong>
+              </div>
+              <div class="dividend-trend-metric">
+                <span>&#x524D;&#x56DE;&#x6BD4;</span>
+                <strong id="dividendTrendDeltaValue">-</strong>
+                <small id="dividendTrendDeltaPct">-</small>
+              </div>
+            </div>
+          </div>
+          <div class="trend-chart-wrap">
+            <div id="dividendTrendEmpty" class="trend-empty"></div>
+            <svg
+              id="dividendTrendChart"
+              class="trend-chart"
+              viewBox="0 0 760 280"
+              role="img"
+              aria-label="&#x914D;&#x5F53;&#x63A8;&#x79FB;&#x30B0;&#x30E9;&#x30D5;"
+              preserveAspectRatio="none"
+            ></svg>
+          </div>
+        </div>
+        <div class="snapshot-audit">
+          <div class="snapshot-audit-header">
+            <h3>&#x4FDD;&#x5B58;&#x6E08;&#x307F;&#x30B9;&#x30CA;&#x30C3;&#x30D7;&#x30B7;&#x30E7;&#x30C3;&#x30C8;</h3>
+            <p>&#x6700;&#x65B0;&#x9806;&#x306E;&#x78BA;&#x8A8D;&#x7528;&#x4E00;&#x89A7;</p>
+          </div>
+          <div class="snapshot-audit-table-wrap">
+            <table class="snapshot-audit-table">
+              <thead>
+                <tr>
+                  <th scope="col">&#x65E5;&#x4ED8;</th>
+                  <th scope="col">&#x7DCF;&#x8CC7;&#x7523;</th>
+                  <th scope="col">&#x65E5;&#x672C;&#x682A;</th>
+                  <th scope="col">&#x5916;&#x56FD;&#x682A;</th>
+                  <th scope="col">&#x6295;&#x8CC7;&#x4FE1;&#x8A17;</th>
+                  <th scope="col">&#x5E74;&#x9593;&#x914D;&#x5F53;</th>
+                </tr>
+              </thead>
+              <tbody id="snapshotAuditTable"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+        <section class="toolbar" aria-label="操作">
+          <label class="search-box">
+            <span>検索</span>
+            <input id="searchInput" type="search" placeholder="コード・銘柄名・業種" />
+          </label>
+          <label class="filter-box asset-filter-box">
+            <span>種別</span>
+            <select id="assetClassFilter">
+              <option value="all">すべて</option>
+            </select>
+          </label>
+          <label class="filter-box dividend-filter-box">
+            <span>配当区分</span>
+            <select id="dividendStatusFilter">
+              <option value="all">すべて</option>
+            </select>
+          </label>
+          <div class="toolbar-actions">
+            <button id="saveSnapshotButton" class="ghost" type="button">&#x4ECA;&#x65E5;&#x306E;&#x8CC7;&#x7523;&#x72B6;&#x6CC1;&#x3092;&#x8A18;&#x9332;</button>
+            <button id="saveTestSnapshotButton" class="ghost" type="button">&#x6628;&#x65E5;&#x306E;&#x30C6;&#x30B9;&#x30C8;&#x30B9;&#x30CA;&#x30C3;&#x30D7;&#x30B7;&#x30E7;&#x30C3;&#x30C8;&#x3092;&#x8FFD;&#x52A0;</button>
+            <button id="undoButton" class="ghost" type="button">元に戻す</button>
+            <button id="redoButton" class="ghost" type="button">やり直し</button>
+            <button id="exportButton" type="button">CSV出力</button>
+          </div>
+        </section>
+
+        <section class="content-grid">
+          <div class="table-wrap" aria-label="保有銘柄一覧">
+            <table class="holdings-card-table">
+              <thead>
+                <tr>
+                  <th scope="col">No.</th>
+                  <th data-sort="assetClass" scope="col">種別</th>
+                  <th data-sort="code" scope="col">コード</th>
+                  <th data-sort="name" scope="col">名称</th>
+                  <th data-sort="sector" scope="col">業種/カテゴリ</th>
+                  <th data-sort="currentValue" scope="col">評価額</th>
+                  <th data-sort="currentYield" scope="col">配当利回り</th>
+                  <th data-sort="yieldOnCost" scope="col">取得利回り</th>
+                  <th data-sort="gainLoss" scope="col">損益</th>
+                  <th data-sort="gainLossPct" scope="col">損益率</th>
+                  <th data-sort="qty" scope="col">保有数</th>
+                  <th data-sort="dividend" scope="col">1株配当</th>
+                  <th data-sort="buy" scope="col">購入価格</th>
+                  <th data-sort="current" scope="col">現在値</th>
+                  <th data-sort="dayChange" scope="col">前日比</th>
+                  <th data-sort="dayChangePct" scope="col">前日比%</th>
+                  <th data-sort="costValue" scope="col">取得額</th>
+                  <th data-sort="dividendStatus" scope="col">配当区分</th>
+                  <th data-sort="annualDividend" scope="col">年間配当</th>
+                  <th scope="col">育成ゲージ</th>
+                </tr>
+              </thead>
+              <tbody id="stockTable"></tbody>
+              <tfoot>
+                <tr>
+                  <th scope="col">No.</th>
+                  <th scope="col">種別</th>
+                  <th scope="col">コード</th>
+                  <th scope="col">名称</th>
+                  <th scope="col">業種/カテゴリ</th>
+                  <th scope="col">評価額</th>
+                  <th scope="col">配当利回り</th>
+                  <th scope="col">取得利回り</th>
+                  <th scope="col">損益</th>
+                  <th scope="col">損益率</th>
+                  <th scope="col">保有数</th>
+                  <th scope="col">1株配当</th>
+                  <th scope="col">購入価格</th>
+                  <th scope="col">現在値</th>
+                  <th scope="col">前日比</th>
+                  <th scope="col">前日比%</th>
+                  <th scope="col">取得額</th>
+                  <th scope="col">配当区分</th>
+                  <th scope="col">年間配当</th>
+                  <th scope="col">育成ゲージ</th>
+                </tr>
+              </tfoot>
+            </table>
+
+            <section class="excluded-section" aria-label="除外された銘柄">
+              <div class="excluded-heading">
+                <h2>除外された銘柄</h2>
+                <p>年間配当の集計対象外。構成比には資産として含めています。</p>
+              </div>
+              <table>
+                <thead>
+                  <tr>
+                    <th scope="col">No.</th>
+                    <th data-excluded-sort="assetClass" scope="col">種別</th>
+                    <th data-excluded-sort="code" scope="col">コード</th>
+                    <th data-excluded-sort="name" scope="col">名称</th>
+                    <th data-excluded-sort="sector" scope="col">業種/カテゴリ</th>
+                    <th data-excluded-sort="currentValue" scope="col">評価額</th>
+                    <th data-excluded-sort="currentYield" scope="col">配当利回り</th>
+                    <th data-excluded-sort="yieldOnCost" scope="col">取得利回り</th>
+                    <th data-excluded-sort="gainLoss" scope="col">損益</th>
+                    <th data-excluded-sort="gainLossPct" scope="col">損益率</th>
+                    <th data-excluded-sort="qty" scope="col">保有数</th>
+                    <th data-excluded-sort="dividend" scope="col">1株配当</th>
+                    <th data-excluded-sort="buy" scope="col">購入価格</th>
+                    <th data-excluded-sort="current" scope="col">現在値</th>
+                    <th data-excluded-sort="dayChange" scope="col">前日比</th>
+                    <th data-excluded-sort="dayChangePct" scope="col">前日比%</th>
+                    <th data-excluded-sort="costValue" scope="col">取得額</th>
+                    <th data-excluded-sort="dividendStatus" scope="col">配当区分</th>
+                    <th data-excluded-sort="annualDividend" scope="col">年間配当</th>
+                  </tr>
+                </thead>
+                <tbody id="excludedStockTable"></tbody>
+                <tfoot>
+                  <tr>
+                    <th scope="col">No.</th>
+                    <th scope="col">種別</th>
+                    <th scope="col">コード</th>
+                    <th scope="col">名称</th>
+                    <th scope="col">業種/カテゴリ</th>
+                    <th scope="col">評価額</th>
+                    <th scope="col">配当利回り</th>
+                    <th scope="col">取得利回り</th>
+                    <th scope="col">損益</th>
+                    <th scope="col">損益率</th>
+                    <th scope="col">保有数</th>
+                    <th scope="col">1株配当</th>
+                    <th scope="col">購入価格</th>
+                    <th scope="col">現在値</th>
+                    <th scope="col">前日比</th>
+                    <th scope="col">前日比%</th>
+                    <th scope="col">取得額</th>
+                    <th scope="col">配当区分</th>
+                    <th scope="col">年間配当</th>
+                  </tr>
+                </tfoot>
+              </table>
+            </section>
+          </div>
+
+          <aside id="dividendInsights" class="insights" aria-label="配当分析">
+            <h2 id="insightsTitle">配当の見どころ</h2>
+            <div id="dividendGoalBlock" class="insight-block goal-block is-hidden">
+              <h3>目標</h3>
+              <div class="goal-card">
+                <div class="goal-card-note">月間配当金と銘柄数を入れると、取得額と平均取得額を自動で計算します。</div>
+                <div class="goal-grid" role="table" aria-label="日本株の目標">
+                  <div class="goal-row" role="row">
+                    <div class="goal-label" role="rowheader">月間配当金</div>
+                    <label class="goal-value goal-value-input">
+                      <input id="goalMonthlyDividendInput" type="number" min="0" step="100" inputmode="numeric" />
+                      <span>円</span>
+                    </label>
+                    <div id="goalMonthlyDividendDiff" class="goal-diff">-</div>
+                  </div>
+                  <div class="goal-row" role="row">
+                    <div class="goal-label" role="rowheader">銘柄数</div>
+                    <label class="goal-value goal-value-input">
+                      <input id="goalStockCountInput" type="number" min="0" step="1" inputmode="numeric" />
+                      <span>銘柄</span>
+                    </label>
+                    <div id="goalStockCountDiff" class="goal-diff">-</div>
+                  </div>
+                  <div class="goal-row" role="row">
+                    <div class="goal-label" role="rowheader">配当利回り</div>
+                    <label class="goal-value goal-value-input">
+                      <input id="goalDividendYieldInput" type="number" min="0" step="0.1" inputmode="decimal" />
+                      <span>%</span>
+                    </label>
+                    <div id="goalDividendYieldDiff" class="goal-diff">-</div>
+                  </div>
+                  <div class="goal-row" role="row">
+                    <div class="goal-label" role="rowheader">年間配当金</div>
+                    <div id="goalAnnualDividendTarget" class="goal-value">-</div>
+                    <div id="goalAnnualDividendDiff" class="goal-diff">-</div>
+                  </div>
+                  <div class="goal-row" role="row">
+                    <div class="goal-label" role="rowheader">取得額</div>
+                    <div id="goalCostTarget" class="goal-value">-</div>
+                    <div id="goalCostDiff" class="goal-diff">-</div>
+                  </div>
+                  <div class="goal-row" role="row">
+                    <div class="goal-label" role="rowheader">平均取得額</div>
+                    <div id="goalAverageCostTarget" class="goal-value">-</div>
+                    <div id="goalAverageCostDiff" class="goal-diff">-</div>
+                  </div>
+                  <div class="goal-row goal-row-separator" role="row">
+                    <div class="goal-label" role="rowheader">評価額目標</div>
+                    <label class="goal-value goal-value-input">
+                      <input id="goalMarketValueInput" type="number" min="0" step="1000" inputmode="numeric" />
+                      <span>円</span>
+                    </label>
+                    <div id="goalMarketValueDiff" class="goal-diff">-</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div id="sectorInsightBlock" class="insight-block">
+              <h3 id="sectorInsightTitle">業種別 構成比</h3>
+              <div class="sector-chart-wrap">
+                <div id="sectorStackChart" class="sector-stack" role="img" aria-label="業種別の評価額構成比"></div>
+                <ul id="sectorLegend" class="sector-legend"></ul>
+              </div>
+            </div>
+            <div id="typeInsightBlock" class="insight-block">
+              <h3>銘柄タイプ 構成比</h3>
+              <div class="type-chart-wrap">
+                <div id="typePieChart" class="type-pie" role="img" aria-label="ディフェンシブ株と景気敏感株とETFの評価額構成比"></div>
+                <ul id="typeLegend" class="type-legend"></ul>
+              </div>
+            </div>
+            <div id="assetInsightBlock" class="insight-block">
+              <h3>資産種別 構成比</h3>
+              <div class="type-chart-wrap">
+                <div id="assetPieChart" class="type-pie" role="img" aria-label="日本株、外国株、投資信託の評価額構成比"></div>
+                <ul id="assetLegend" class="type-legend"></ul>
+              </div>
+            </div>
+            <div id="dividendStatusInsightBlock" class="insight-block">
+              <h3>配当区分 構成比</h3>
+              <div class="type-chart-wrap">
+                <div id="dividendStatusPieChart" class="type-pie" role="img" aria-label="配当集計対象、無分配、未入力、対象外の評価額構成比"></div>
+                <ul id="dividendStatusLegend" class="type-legend"></ul>
+              </div>
+            </div>
+            <div id="topDividendInsightBlock" class="insight-block">
+              <h3>配当貢献 上位5銘柄</h3>
+              <ol id="topDividendList"></ol>
+            </div>
+            <div id="topYieldInsightBlock" class="insight-block">
+              <h3>取得利回り 上位5銘柄</h3>
+              <ol id="topYieldList"></ol>
+            </div>
+            <div id="missingDividendInsightBlock" class="insight-block warning">
+              <h3>配当未入力</h3>
+              <ul id="missingDividendList"></ul>
+            </div>
+          </aside>
+        </section>
+      </section>
+
+      <section id="analysisPage" class="tab-page">
+        <section class="analysis-section">
+          <section class="view-heading" aria-live="polite">
+            <div>
+              <h2>分析</h2>
+              <p>保有銘柄データから、業種バランスと配当の偏りを確認します。</p>
+            </div>
+            <span id="analysisUpdatedAt">見る専用</span>
+          </section>
+
+          <section class="analysis-command-summary" aria-label="分析サマリー">
+            <article class="metric analysis-hero-metric">
+              <span class="analysis-metric-icon is-income" aria-hidden="true"></span>
+              <span>年間配当金</span>
+              <strong id="analysisAnnualDividendTotal">0円</strong>
+              <small>税引前の予定額</small>
+            </article>
+            <article class="metric">
+              <span class="analysis-metric-icon is-sector" aria-hidden="true"></span>
+              <span>業種数</span>
+              <strong id="analysisSectorCount">0</strong>
+              <small>保有銘柄の業種</small>
+            </article>
+            <article class="metric">
+              <span class="analysis-metric-icon is-stock" aria-hidden="true"></span>
+              <span>銘柄数</span>
+              <strong id="analysisStockCount">0</strong>
+              <small>集計対象</small>
+            </article>
+            <article class="metric">
+              <span class="analysis-metric-icon is-cyclical" aria-hidden="true"></span>
+              <span>景気敏感比率</span>
+              <strong id="analysisCyclicalRatio">0.00%</strong>
+              <small>評価額ベース</small>
+            </article>
+            <article class="metric">
+              <span class="analysis-metric-icon is-defensive" aria-hidden="true"></span>
+              <span>ディフェンシブ比率</span>
+              <strong id="analysisDefensiveRatio">0.00%</strong>
+              <small>評価額ベース</small>
+            </article>
+          </section>
+
+          <section class="analysis-health-card" aria-label="ポートフォリオ健康診断">
+            <div>
+              <h3>ポートフォリオ健康診断</h3>
+              <p>業種と分類の偏りをざっくり確認します。</p>
+            </div>
+            <ul id="analysisHealthList" class="analysis-health-list"></ul>
+          </section>
+
+          <section class="analysis-command-grid">
+            <article class="analysis-panel analysis-panel-wide analysis-focus-panel">
+              <div class="analysis-panel-heading">
+                <h3>業種別構成</h3>
+                <span>構成比が高い順</span>
+              </div>
+              <div id="analysisSectorTable" class="analysis-bar-list"></div>
+            </article>
+
+            <article class="analysis-panel">
+              <div class="analysis-panel-heading">
+                <h3>景気敏感 / ディフェンシブ分析</h3>
+                <span>評価額ベース</span>
+              </div>
+              <div class="analysis-type-layout">
+                <div id="analysisTypeDonut" class="analysis-type-donut" aria-hidden="true"></div>
+                <div id="analysisTypeTable" class="analysis-type-bars"></div>
+              </div>
+            </article>
+
+            <article class="analysis-panel">
+              <div class="analysis-panel-heading">
+                <h3>配当金構成比</h3>
+                <span>上位10銘柄</span>
+              </div>
+              <div id="analysisDividendTable" class="analysis-dividend-list"></div>
+            </article>
+
+            <article class="analysis-panel analysis-yield-panel">
+              <div class="analysis-panel-heading">
+                <h3>利回り分布</h3>
+                <span>補助情報</span>
+              </div>
+              <div id="analysisYieldTable" class="analysis-yield-bars"></div>
+            </article>
+          </section>
+
+          <section class="analysis-ranking-grid" aria-label="分析ランキング">
+            <article class="analysis-panel analysis-ranking-panel">
+              <div class="analysis-panel-heading">
+                <h3>業種別 年間配当金</h3>
+                <span>上位5業種</span>
+              </div>
+              <ol id="analysisSectorDividendRanking" class="analysis-mini-ranking"></ol>
+            </article>
+
+            <article class="analysis-panel analysis-ranking-panel">
+              <div class="analysis-panel-heading">
+                <h3>増配率ランキング</h3>
+                <span>上位5銘柄</span>
+              </div>
+              <ol id="analysisDividendGrowthRanking" class="analysis-mini-ranking"></ol>
+            </article>
+
+            <article class="analysis-panel analysis-ranking-panel">
+              <div class="analysis-panel-heading">
+                <h3>連続増配年数</h3>
+                <span>上位5銘柄</span>
+              </div>
+              <ol id="analysisDividendStreakRanking" class="analysis-mini-ranking"></ol>
+            </article>
+          </section>
+        </section>
+      </section>
+
+      <section id="importPage" class="tab-page">
+        <section class="import-layout">
+          <div class="import-panel">
+            <h2>保有データ取り込み</h2>
+            <div class="import-description-row">
+              <p>
+                Yahoo!ファイナンス、日本株の一覧、SBIの外国株コピー、証券会社CSVを使って保有データを更新できます。
+              </p>
+              <a
+                class="ghost import-link-button"
+                href="https://finance.yahoo.co.jp/portfolio/detail?portfolioId=2&isUpdate=1781663329564"
+                target="_blank"
+                rel="noopener noreferrer"
+              >Yahoo!ファイナンスを開く</a>
+            </div>
+            <label class="file-import-box">
+              <span>証券会社CSV</span>
+              <input id="csvFileInput" type="file" accept=".csv,text/csv" />
+            </label>
+            <textarea id="importText" spellcheck="false" placeholder="ポートフォリオ表や外国株の保有一覧をここに貼り付け"></textarea>
+            <div class="import-actions">
+              <button id="previewImportButton" type="button">プレビュー</button>
+              <button id="applyImportButton" type="button">取り込み</button>
+            </div>
+            <p id="importStatus" class="import-status">まだデータは読み込まれていません。</p>
+          </div>
+
+          <div class="import-panel">
+            <div class="import-preview-heading">
+              <h2>取り込みプレビュー</h2>
+              <button id="clearImportButton" class="ghost preview-clear-button" type="button">入力とプレビューをクリア</button>
+            </div>
+            <div class="import-preview-wrap">
+              <table class="import-preview-table">
+                <thead>
+                  <tr>
+                    <th>コード</th>
+                    <th>名称</th>
+                    <th>現在値</th>
+                    <th>購入価格</th>
+                    <th>保有数</th>
+                    <th>評価額</th>
+                    <th>損益</th>
+                    <th>前日比</th>
+                    <th>前日比%</th>
+                    <th>業種</th>
+                    <th>1株配当</th>
+                    <th>配当利回り</th>
+                    <th>配当区分</th>
+                    <th>状態</th>
+                  </tr>
+                </thead>
+                <tbody id="importPreviewTable"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+      </section>
+
+      <section id="settingsPage" class="tab-page">
+        <section class="settings-panel">
+          <div>
+            <h2>設定</h2>
+            <p>保存済みの保有データや取り込み内容を管理します。</p>
+          </div>
+
+          <div class="danger-zone">
+            <div>
+              <h3>全データをクリア</h3>
+              <p>登録済みの日本株、外国株、投資信託をすべて削除します。列幅などの表示設定は残ります。</p>
+            </div>
+            <button id="clearAllDataButton" class="danger-button" type="button">全データをクリア</button>
+          </div>
+        </section>
+      </section>
+    </main>
+
+    <template id="rowTemplate">
+      <tr>
+        <td data-cell="rowNumber"></td>
+        <td><span class="readonly-field" data-field="assetClass"></span></td>
+        <td><span class="readonly-field is-text" data-field="code"></span></td>
+        <td><span class="readonly-field is-text" data-field="name"></span></td>
+        <td><span class="readonly-field" data-field="sector"></span></td>
+        <td data-cell="currentValue"></td>
+        <td data-cell="currentYield"></td>
+        <td data-cell="yieldOnCost"></td>
+        <td data-cell="gainLoss"></td>
+        <td data-cell="gainLossPct"></td>
+        <td><span class="readonly-field is-number" data-field="qty"></span></td>
+        <td><span class="readonly-field is-number" data-field="dividend"></span></td>
+        <td><span class="readonly-field is-number" data-field="buy"></span></td>
+        <td><span class="readonly-field is-number" data-field="current"></span></td>
+        <td><span class="readonly-field is-number" data-field="dayChange"></span></td>
+        <td><span class="readonly-field is-number" data-field="dayChangePct"></span></td>
+        <td data-cell="costValue"></td>
+        <td><span class="readonly-field" data-field="dividendStatus"></span></td>
+        <td data-cell="annualDividend"></td>
+        <td data-cell="growthGauge"></td>
+      </tr>
+    </template>
+
+    <script src="./app.js"></script>
+  </body>
+</html>
